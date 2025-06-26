@@ -1,5 +1,35 @@
 # In development
 
+```mermaid
+flowchart TD
+  ref1_bwa[ref_1.fa]
+  ref2_bwa[ref_2.fa]
+  composite_ref[composite_ref.fa]
+
+  fastq[fastq_dir]
+  fastq --> bwa_competitive_mapping(bwa_competitive_mapping)
+  ref1_bwa --> bwa_competitive_mapping
+  ref2_bwa --> bwa_competitive_mapping
+  composite_ref --> bwa_competitive_mapping
+  bwa_competitive_mapping --> qc_check(qc_check)
+  bwa_competitive_mapping --> bwa_ref_1_fastq
+  bwa_competitive_mapping --> bwa_ref_2_fastq
+  qc_check --> qc_depth_plot
+  qc_check --> qc_depth_summary_csv
+  
+  ref1_bbsplit[ref_1.fa]
+  ref2_bbsplit[ref_2.fa]
+  fastq[fastq_dir]
+  fastq --> bbsplit(bbsplit)
+  ref1_bbsplit --> bbsplit
+  ref2_bbsplit --> bbsplit
+
+
+  bbsplit --> bbsplit_ref_1_fastq
+  bbsplit --> bbsplit_ref_2_fastq
+
+```
+
 ## Parameters
 
 | Option                           | Default  | Description                                                                                                         |
