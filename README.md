@@ -1,7 +1,10 @@
 # In development
 
+
+**Default: run with --bwa**
 ```mermaid
-flowchart TD
+
+graph TD
   ref1_bwa[ref_1.fa]
   ref2_bwa[ref_2.fa]
   composite_ref[composite_ref.fa]
@@ -16,7 +19,14 @@ flowchart TD
   bwa_competitive_mapping --> bwa_ref_2_fastq
   qc_check --> qc_depth_plot
   qc_check --> qc_depth_summary_csv
-  
+
+```
+
+
+**Run with --bbsplit**
+```mermaid
+
+graph TD
   ref1_bbsplit[ref_1.fa]
   ref2_bbsplit[ref_2.fa]
   fastq[fastq_dir]
