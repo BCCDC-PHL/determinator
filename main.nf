@@ -33,8 +33,14 @@ workflow {
   }
 
   main:
-    bbsplit(ch_fastq)
-    bwa_competitive_mapping(ch_fastq)
+    if (params.bbsplit){
+        bbsplit(ch_fastq)
+    }
+    
+    if (params.bwa){
+         bwa_competitive_mapping(ch_fastq)
+    }
+   
 
 }
 
