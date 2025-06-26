@@ -5,14 +5,10 @@
 ```mermaid
 
 graph TD
-  ref1_bwa[ref_1.fa]
-  ref2_bwa[ref_2.fa]
   composite_ref[composite_ref.fa]
 
   fastq[fastq_dir]
   fastq --> bwa_competitive_mapping(bwa_competitive_mapping)
-  ref1_bwa --> bwa_competitive_mapping
-  ref2_bwa --> bwa_competitive_mapping
   composite_ref --> bwa_competitive_mapping
   bwa_competitive_mapping --> qc_check(qc_check)
   bwa_competitive_mapping --> bwa_ref_1_fastq
