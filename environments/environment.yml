@@ -7,3 +7,6 @@ dependencies:
   - pysam=0.23.3
   - python=3
   - bwa=0.7.19
+  - pandas
+  - matplotlib
+  - biopython

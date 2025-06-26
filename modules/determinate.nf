@@ -2,7 +2,8 @@ process bbsplit {
 
   tag { sample_id }
 
-  publishDir  "${params.outdir}", mode: 'copy', pattern: "*.fq.gz"
+  publishDir  "${params.outdir}/bbsplit_${params.ref_1_name}_fastq", mode: 'copy', pattern: "*${params.ref_1_name}*.fq.gz"
+  publishDir  "${params.outdir}/bbsplit_${params.ref_2_name}_fastq", mode: 'copy', pattern: "*${params.ref_2_name}*.fq.gz"
   
   input:
   tuple val(sample_id), path(reads_r1), path(reads_r2)
@@ -24,27 +25,55 @@ process bwa_competitive_mapping {
 
   tag { sample_id }
  
-  publishDir  "${params.outdir}", mode: 'copy', pattern: "*.gz"
+  publishDir  "${params.outdir}/bwa_${params.ref_1_name}_fastq", mode: 'copy', pattern: "*${params.ref_1_name}*_R*.gz"
+  publishDir  "${params.outdir}/bwa_${params.ref_2_name}_fastq", mode: 'copy', pattern: "*${params.ref_2_name}*_R*.gz"
+  
   
   input:
   tuple val(sample_id), path(reads_r1), path(reads_r2)
 
   output:
   path "*.gz"
+  tuple val(sample_id), path('composite_ref.bam'), emit: composite_ref_bam
 
   script:
   """
 
-  bwa mem -t ${task.cpus} ${params.composite_ref} ${reads_r1} ${reads_r2} | \
-      filter_reads_according_to_ref.py -i - -r1 ${params.ref_1} -r2 ${params.ref_2} -o1 ${sample_id}_${params.ref_1_name}.bam -o2  ${sample_id}_${params.ref_2_name}.bam
+  bwa mem -t ${task.cpus} -T ${params.bwa_T} ${params.composite_ref} ${reads_r1} ${reads_r2} > composite_ref.bam
+    filter_reads_according_to_ref.py -i composite_ref.bam -r1 ${params.ref_1_name} -r2 ${params.ref_2_name} -o1 ${sample_id}_${params.ref_1_name}.bam -o2  ${sample_id}_${params.ref_2_name}.bam
     
-  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_1_name}.bam| \
+  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_1_name}.bam | \
       samtools fastq -1 ${sample_id}_${params.ref_1_name}_R1.fastq.gz -2 ${sample_id}_${params.ref_1_name}_R2.fastq.gz -s ${sample_id}_${params.ref_1_name}_singletons.fastq.gz 
 
-  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_2_name}.bam| \
+  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_2_name}.bam | \
       samtools fastq -1 ${sample_id}_${params.ref_2_name}_R1.fastq.gz -2 ${sample_id}_${params.ref_2_name}_R2.fastq.gz -s ${sample_id}_${params.ref_2_name}_singletons.fastq.gz 
 
+  """
+}
 
+process qc_check {
+
+  tag { sample_id }
+ 
+  publishDir  "${params.outdir}/depth_summaries", mode: 'copy', pattern: "*.csv"
+  publishDir  "${params.outdir}/qc_plots", mode: 'copy', pattern: "*.png"
+  
+  input:
+  tuple val(sample_id), path(composite_ref_bam)
+
+  output:
+  tuple val(sample_id), path('*.png'), emit: depth_plot
+  path('*.csv'), emit: depth_csv
+
+  script:
+  """
+
+  samtools sort -o composite_ref_sorted.bam ${composite_ref_bam} 
+  samtools index composite_ref_sorted.bam
+
+  plot_summarize_depth.py \
+  --sample ${sample_id} \
+  --bam composite_ref_sorted.bam \
 
   """
 }
