@@ -1,0 +1,6 @@
+.nextflow*
+nextflow
+results
+work
+test_output
+test_input
