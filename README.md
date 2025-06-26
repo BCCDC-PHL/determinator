@@ -13,7 +13,4 @@
 | `samplesheet_input`                    | `NO_FILE`     | samplesheet containing ID,R1,R2 with sample name and paths to fastq reads      |
 | `bwa`                    |  `true`   | default read splitting method using bwa and samtools                                          |
 | `bbsplit`                    |    `false`  | use bbsplit for read splitting method |
-| `bbsplit_ambigious2`                    |    `toss`  | Set behavior only for reads that map ambiguously to multiple different references, default= toss,                      options:  best   (use the first best site)
-                       toss   (consider unmapped)
-                       all   (write a copy to the output for each reference to which it maps)
-                       split   (write a copy to the AMBIGUOUS_ output for each reference to which it maps) |
+| `bbsplit_ambigious2`                    |    `toss`  | Set behavior only for reads that map ambiguously to multiple different references default=  toss     options:  best   (use the first best site) toss   (consider unmapped) all   (write a copy to the output for each reference to which it maps) split   (write a copy to the AMBIGUOUS_ output for each reference to which it maps) |
