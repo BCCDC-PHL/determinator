@@ -21,7 +21,7 @@ def filter_viral_reads(ref1_contigs, ref2_contigs, input_sam_fp, output1_fp, out
     # iterate over input from BWA
     for read in input_sam:
         # only look at primary alignments
-        if not read.is_supplementary and not read.is_secondary:
+        if (not read.is_supplementary and not read.is_secondary and read.mapping_quality >= args.min_mapq):
             if read.reference_name in ref1_contigs:
                 output1.write(read)
                 ref1_reads += 1
@@ -60,6 +60,9 @@ if __name__ == '__main__':
 
     parser.add_argument('-r2', '--ref2', required=True, nargs='+',
                         help="List of contig names for viral ref 2 (e.g., RSV-B)")
+    
+    parser.add_argument('--min-mapq', type=int, default=0,
+                    help="Minimum MAPQ required to include a read (default: 0)")
 
     args = parser.parse_args()
 

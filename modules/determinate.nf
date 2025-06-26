@@ -40,7 +40,7 @@ process bwa_competitive_mapping {
   """
 
   bwa mem -t ${task.cpus} -T ${params.bwa_T} ${params.composite_ref} ${reads_r1} ${reads_r2} > composite_ref.bam
-    filter_reads_according_to_ref.py -i composite_ref.bam -r1 ${params.ref_1_name} -r2 ${params.ref_2_name} -o1 ${sample_id}_${params.ref_1_name}.bam -o2  ${sample_id}_${params.ref_2_name}.bam
+    filter_reads_according_to_ref.py -i composite_ref.bam -r1 ${params.ref_1_name} -r2 ${params.ref_2_name} -o1 ${sample_id}_${params.ref_1_name}.bam -o2  ${sample_id}_${params.ref_2_name}.bam --min-mapq ${params.min_mapq}
     
   samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_1_name}.bam | \
       samtools fastq -1 ${sample_id}_${params.ref_1_name}_R1.fastq.gz -2 ${sample_id}_${params.ref_1_name}_R2.fastq.gz -s ${sample_id}_${params.ref_1_name}_singletons.fastq.gz 
