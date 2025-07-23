@@ -18,7 +18,7 @@ def header() {
                      ;--..--._|}
   (\\\\               '--/\\\\--'  )
    \\\\                | '-'  :'|
-    \\\\               . -==- .-|      Hasta la vista, fastq ambiguity. I'll be back ... with sorted fastqs!
+    \\\\               . -==- .-|      Hasta la vista, sample ambiguity. I'll be back ... with sorted fastqs!
      \\\\               \\\\.__.'   \\\\--._
      [\\\\          __.--|       //  _/'--.
      \\ \\\\       .'-._ ('-----'/ __/      \\\\
@@ -89,9 +89,10 @@ if (params.rsv){
 }
 
 
-include { bbsplit }          from './modules/determinate.nf'
+include { bbsplit }                          from './modules/determinate.nf'
 include { bwa_competitive_mapping }          from './modules/determinate.nf'
-include { qc_check }          from './modules/determinate.nf'
+include { qc_check }                         from './modules/determinate.nf'
+include { fastp }                            from './modules/determinate.nf'
 
 // main workflow
 
@@ -105,12 +106,15 @@ workflow {
   }
 
   main:
+
+    fastp(ch_fastq)
+
     if (params.bbsplit){
-        bbsplit(ch_fastq)
+        bbsplit(fastp.out.reads)
     }
     
     if (params.bwa){
-         bwa_competitive_mapping(ch_fastq)
+         bwa_competitive_mapping(fastp.out.reads)
          qc_check(bwa_competitive_mapping.out.composite_ref_bam)
          summary_csv = qc_check.out.depth_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir:  params.outdir)
     }

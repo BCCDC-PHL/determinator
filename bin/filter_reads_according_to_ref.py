@@ -33,9 +33,26 @@ def filter_viral_reads(ref1_contigs, ref2_contigs, input_sam_fp, output1_fp, out
 
     total = ref1_reads + ref2_reads + other_reads
 
-    print(f"ref1 read count = {ref1_reads} ({ref1_reads/total*100:.2f}%)", file=sys.stderr)
-    print(f"ref2 read count = {ref2_reads} ({ref2_reads/total*100:.2f}%)", file=sys.stderr)
-    print(f"other mapped reads = {other_reads} ({other_reads/total*100:.2f}%)", file=sys.stderr)
+    if total > 0:
+        print(f"ref1 read count = {ref1_reads} ({ref1_reads/total*100:.2f}%)", file=sys.stderr)
+        print(f"ref2 read count = {ref2_reads} ({ref2_reads/total*100:.2f}%)", file=sys.stderr)
+        print(f"other mapped reads = {other_reads} ({other_reads/total*100:.2f}%)", file=sys.stderr)
+    else:
+        print(f"ref1 read count = {ref1_reads} (0.00%)", file=sys.stderr)
+        print(f"ref2 read count = {ref2_reads} (0.00%)", file=sys.stderr)
+        print(f"other mapped reads = {other_reads} (0.00%)", file=sys.stderr)
+
+    if args.csv_output:
+        import csv
+        def safe_percent(count, total):
+            return count / total * 100 if total > 0 else 0.0
+        with open(args.csv_output, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["sample_id", "reference", "read_count", "pct_total_reads"])
+            writer.writerow([args.sample_id, ref1_contigs[0], ref1_reads, f"{safe_percent(ref1_reads, total):.2f}"])
+            writer.writerow([args.sample_id, ref2_contigs[0], ref2_reads, f"{safe_percent(ref2_reads, total):.2f}"])
+            writer.writerow([args.sample_id, "other", other_reads, f"{safe_percent(other_reads, total):.2f}"])
+
 
     input_sam.close()
     output1.close()
@@ -63,6 +80,12 @@ if __name__ == '__main__':
     
     parser.add_argument('--min-mapq', type=int, default=0,
                     help="Minimum MAPQ required to include a read (default: 0)")
+    
+    parser.add_argument('--csv-output', type=str, default="read_summary.csv",
+                    help="Optional CSV file to write read counts and percentages")
+    
+    parser.add_argument('--sample_id', type=str, 
+                help="Sample id used for output csv ")
 
     args = parser.parse_args()
 
