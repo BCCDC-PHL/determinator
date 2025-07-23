@@ -24,7 +24,7 @@ process fastp {
     printf -- "          value: null\\n"           >> ${sample_id}_fastp_provenance.yml
 
     fastp \
-	--cut_tail \
+	--cut_tail -g -x \
 	-i ${reads_1} \
 	-I ${reads_2} \
 	-o ${sample_id}_trimmed_R1.fastq.gz \
@@ -65,6 +65,7 @@ process bwa_competitive_mapping {
  
   publishDir  "${params.outdir}/bwa_${params.ref_1_name}_fastq", mode: 'copy', pattern: "*${params.ref_1_name}*_R*.gz"
   publishDir  "${params.outdir}/bwa_${params.ref_2_name}_fastq", mode: 'copy', pattern: "*${params.ref_2_name}*_R*.gz"
+  publishDir  "${params.outdir}/read_summary", mode: 'copy', pattern: "*_read_summary.csv"
   
   
   input:
@@ -72,13 +73,14 @@ process bwa_competitive_mapping {
 
   output:
   path "*.gz"
+  path "*.csv"
   tuple val(sample_id), path('composite_ref.bam'), emit: composite_ref_bam
 
   script:
   """
 
   bwa mem -t ${task.cpus} -T ${params.bwa_T} ${params.composite_ref} ${reads_r1} ${reads_r2} > composite_ref.bam
-    filter_reads_according_to_ref.py -i composite_ref.bam -r1 ${params.ref_1_name} -r2 ${params.ref_2_name} -o1 ${sample_id}_${params.ref_1_name}.bam -o2  ${sample_id}_${params.ref_2_name}.bam --min-mapq ${params.min_mapq}
+    filter_reads_according_to_ref.py -i composite_ref.bam -r1 ${params.ref_1_name} -r2 ${params.ref_2_name} -o1 ${sample_id}_${params.ref_1_name}.bam -o2  ${sample_id}_${params.ref_2_name}.bam --min-mapq ${params.min_mapq} --csv-output ${sample_id}_read_summary.csv --sample_id ${sample_id}
     
   samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_1_name}.bam | \
       samtools fastq -1 ${sample_id}_${params.ref_1_name}_R1.fastq.gz -2 ${sample_id}_${params.ref_1_name}_R2.fastq.gz -s ${sample_id}_${params.ref_1_name}_singletons.fastq.gz 
