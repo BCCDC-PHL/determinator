@@ -18,11 +18,6 @@ def read_depth_file(bamfile):
 def plot_depth_per_contig(depth_df, sample_name, min_depth, ylim_top=10**5, width_per_plot=8, height=4):
     contigs = depth_df['contig'].unique()
     n_contigs = len(contigs)
-
-    if n_contigs == 0:
-        print(f"No contigs found in {sample_name}, skipping plot.")
-        return
-    
     fig, axs = plt.subplots(1, n_contigs, figsize=(width_per_plot * n_contigs, height), squeeze=False)
     
     for i, contig in enumerate(contigs):

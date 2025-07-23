@@ -93,6 +93,8 @@ process bwa_competitive_mapping {
 
 process qc_check {
 
+  errorStrategy = 'ignore'
+
   tag { sample_id }
  
   publishDir  "${params.outdir}/depth_summaries", mode: 'copy', pattern: "*.csv"
