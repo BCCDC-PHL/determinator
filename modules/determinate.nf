@@ -24,7 +24,7 @@ process fastp {
     printf -- "          value: null\\n"           >> ${sample_id}_fastp_provenance.yml
 
     fastp \
-	--cut_tail -g -x \
+	--cut_tail --trim_poly_g \
 	-i ${reads_1} \
 	-I ${reads_2} \
 	-o ${sample_id}_trimmed_R1.fastq.gz \
