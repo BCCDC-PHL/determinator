@@ -59,9 +59,13 @@ nextflow run BCCDC-PHL/determinator \
   --bbsplit \
   --ref_1 path/to/ref_1.fa \
   --ref_2 path/to/ref_2.fa \
+  --ref_1_ID <RSVA reference accession> \
+  --ref_2_ID <RSV B reference accession> \
   --fastq_input /path/to/fastq_dir
 
 ```
+
+At this time both the path to the reference and the reference ID is required with bbsplit. 
 
 
 ```mermaid
@@ -86,8 +90,8 @@ graph TD
 |:---------------------------------|---------:|--------------------------------------------------------------------------------------------------------------------:|
 | `ref_1`       | `NO_FILE`    | path to reference 1  (used with --bbsplit)                                                       |
 | `ref_2`          | `NO_FILE`      | path to reference 2  (used with --bbsplit)                                                      |                                                        |
-| `ref_1_ID`                        | `NO_FILE`     | rame for reference 1 in output file naming    (used with --bwa)                                                                     |
-| `ref_2_ID`                  | `NO_FILE`     | name for reference 2 in output file     (used with --bwa)             
+| `ref_1_ID`                        | `NO_FILE`     | rame for reference 1 in output file naming                                                                   |
+| `ref_2_ID`                  | `NO_FILE`     | name for reference 2 in output file                
 | `fastq_input`               | `NO_FILE`   | path to directory of fastqs to competitively map and split into reads that map to reference 1 and 2                                                                   |
 | `samplesheet_input`                    | `NO_FILE`     | samplesheet containing ID,R1,R2 with sample name and paths to fastq reads      |                                    |
 | `bbsplit`                    |    `false`  | use bbsplit for read splitting method |
