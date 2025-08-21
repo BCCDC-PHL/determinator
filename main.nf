@@ -98,7 +98,9 @@ include { fastp }                            from './modules/determinate.nf'
 
 workflow {
 
-  //prepare bwa index files as channels  
+  //prepare bwa index files as channels
+
+  ch_composite_ref_file = Channel.fromPath(params.composite_ref)
   composite_bwaAuxFiles = []
   composite_refPath = new File(params.composite_ref).getAbsolutePath()
   new File(composite_refPath).getParentFile().eachFileMatch( ~/.*.bwt|.*.pac|.*.ann|.*.amb|.*.sa/) { composite_bwaAuxFiles << it }
@@ -124,7 +126,7 @@ workflow {
     
     if (params.bwa){
 
-         bwa_competitive_mapping(fastp.out.reads.combine(ch_composite_bwaAuxFiles))
+         bwa_competitive_mapping(fastp.out.reads.combine(ch_composite_ref_file).combine(ch_composite_bwaAuxFiles))
          qc_check(bwa_competitive_mapping.out.composite_ref_bam)
          summary_csv = qc_check.out.depth_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir:  params.outdir)
     }
