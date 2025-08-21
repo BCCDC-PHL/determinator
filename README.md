@@ -1,5 +1,11 @@
 ![Pipeline Diagram](resources/README/determinator_text.png)
 
+# DETERMINATORSV
+
+This pipeline was designed for use with RSV. However, this pipeline is **not** pathogen specific. Run BCCDC-PHL/determinator with `--rsv` when working with RSV. This will not change the results but contains a special welcome message from determinatorSV. 
+
+Hasta la vista RSV ambiguity. DeterminatorSV will be back... with subtypes!
+
 ![Determinator](resources/README/determinator.png)
 
 # BCCDC-PHL/determinator
@@ -159,13 +165,7 @@ Each sample will have an individual depth summary in this folder. At the top lev
 | test     | OP975389.1  | 15222           | 730              | 4.8             | 16.31         | 0.0          |
 
 
-# DETERMINATORSV
 
-This pipeline was designed for use with RSV. However, this pipeline is not pathogen specific. Run this pipeline with `--rsv` when using with RSV. This will not change the results and has no operational impacts but contains a special welcome message from determinatorSV. 
-
-Hasta la vista RSV ambiguity. DeterminatorSV will be back... with subtypes!
-
-![Determinator](resources/README/determinator.png)
 
 
 
