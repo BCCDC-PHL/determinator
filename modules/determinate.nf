@@ -40,11 +40,11 @@ process bbsplit {
 
   tag { sample_id }
 
-  publishDir  "${params.outdir}/bbsplit_${params.ref_1_name}_fastq", mode: 'copy', pattern: "*${params.ref_1_name}*.fq.gz"
-  publishDir  "${params.outdir}/bbsplit_${params.ref_2_name}_fastq", mode: 'copy', pattern: "*${params.ref_2_name}*.fq.gz"
+  publishDir  "${params.outdir}/bbsplit_${params.ref_1_ID}_fastq", mode: 'copy', pattern: "*${params.ref_1_ID}*.fq.gz"
+  publishDir  "${params.outdir}/bbsplit_${params.ref_2_ID}_fastq", mode: 'copy', pattern: "*${params.ref_2_ID}*.fq.gz"
   
   input:
-  tuple val(sample_id), path(reads_r1), path(reads_r2)
+  tuple val(sample_id), path(reads_r1), path(reads_r2), path(ref_1), path(ref_2)
 
   output:
   path "*.gz"
@@ -52,7 +52,7 @@ process bbsplit {
   script:
   """
 
-  bbsplit.sh ambiguous2=${params.bbsplit_ambiguous2} ref=${params.ref_1},${params.ref_2} in=${reads_r1} in2=${reads_r2}  basename=${sample_id}_%_R#.fq
+  bbsplit.sh ambiguous2=${params.bbsplit_ambiguous2} ref=${ref_1},${ref_2} in=${reads_r1} in2=${reads_r2}  basename=${sample_id}_%_R#.fq
   gzip *.fq
 
   """
@@ -63,13 +63,13 @@ process bwa_competitive_mapping {
 
   tag { sample_id }
  
-  publishDir  "${params.outdir}/bwa_${params.ref_1_name}_fastq", mode: 'copy', pattern: "*${params.ref_1_name}*_R*.gz"
-  publishDir  "${params.outdir}/bwa_${params.ref_2_name}_fastq", mode: 'copy', pattern: "*${params.ref_2_name}*_R*.gz"
+  publishDir  "${params.outdir}/bwa_${params.ref_1_ID}_fastq", mode: 'copy', pattern: "*${params.ref_1_ID}*_R*.gz"
+  publishDir  "${params.outdir}/bwa_${params.ref_2_ID}_fastq", mode: 'copy', pattern: "*${params.ref_2_ID}*_R*.gz"
   publishDir  "${params.outdir}/read_summary", mode: 'copy', pattern: "*_read_summary.csv"
   
   
   input:
-  tuple val(sample_id), path(reads_r1), path(reads_r2)
+  tuple val(sample_id), path(reads_r1), path(reads_r2), path(composite_ref_files)
 
   output:
   path "*.gz"
@@ -79,14 +79,14 @@ process bwa_competitive_mapping {
   script:
   """
 
-  bwa mem -t ${task.cpus} -T ${params.bwa_T} ${params.composite_ref} ${reads_r1} ${reads_r2} > composite_ref.bam
-    filter_reads_according_to_ref.py -i composite_ref.bam -r1 ${params.ref_1_name} -r2 ${params.ref_2_name} -o1 ${sample_id}_${params.ref_1_name}.bam -o2  ${sample_id}_${params.ref_2_name}.bam --min-mapq ${params.min_mapq} --csv-output ${sample_id}_read_summary.csv --sample_id ${sample_id}
+  bwa mem -t ${task.cpus} -T ${params.bwa_T} ${composite_ref_files} ${reads_r1} ${reads_r2} > composite_ref.bam
+    filter_reads_according_to_ref.py -i composite_ref.bam -r1 ${params.ref_1_ID} -r2 ${params.ref_2_ID} -o1 ${sample_id}_${params.ref_1_ID}.bam -o2  ${sample_id}_${params.ref_2_ID}.bam --min-mapq ${params.min_mapq} --csv-output ${sample_id}_read_summary.csv --sample_id ${sample_id}
     
-  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_1_name}.bam | \
-      samtools fastq -1 ${sample_id}_${params.ref_1_name}_R1.fastq.gz -2 ${sample_id}_${params.ref_1_name}_R2.fastq.gz -s ${sample_id}_${params.ref_1_name}_singletons.fastq.gz 
+  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_1_ID}.bam | \
+      samtools fastq -1 ${sample_id}_${params.ref_1_ID}_R1.fastq.gz -2 ${sample_id}_${params.ref_1_ID}_R2.fastq.gz -s ${sample_id}_${params.ref_1_ID}_singletons.fastq.gz 
 
-  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_2_name}.bam | \
-      samtools fastq -1 ${sample_id}_${params.ref_2_name}_R1.fastq.gz -2 ${sample_id}_${params.ref_2_name}_R2.fastq.gz -s ${sample_id}_${params.ref_2_name}_singletons.fastq.gz 
+  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_2_ID}.bam | \
+      samtools fastq -1 ${sample_id}_${params.ref_2_ID}_R1.fastq.gz -2 ${sample_id}_${params.ref_2_ID}_R2.fastq.gz -s ${sample_id}_${params.ref_2_ID}_singletons.fastq.gz 
 
   """
 }

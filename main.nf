@@ -97,7 +97,16 @@ include { fastp }                            from './modules/determinate.nf'
 // main workflow
 
 workflow {
-  //ch_ref = Channel.fromPath( "${params.ref}", type: 'file')
+
+  //prepare bwa index files as channels  
+  composite_bwaAuxFiles = []
+  composite_refPath = new File(params.composite_ref).getAbsolutePath()
+  new File(composite_refPath).getParentFile().eachFileMatch( ~/.*.bwt|.*.pac|.*.ann|.*.amb|.*.sa/) { composite_bwaAuxFiles << it }
+  ch_composite_bwaAuxFiles = Channel.fromPath( composite_bwaAuxFiles ).collect().toList()
+
+  // prepare bbsplit ref files as channels 
+  ch_ref1_file = Channel.fromPath(params.ref_1)
+  ch_ref2_file = Channel.fromPath(params.ref_2)
 
   if (params.samplesheet_input != 'NO_FILE') {
     ch_fastq = Channel.fromPath(params.samplesheet_input).splitCsv(header: true).map{ it -> [it['ID'], it['R1'], it['R2']] }
@@ -110,11 +119,12 @@ workflow {
     fastp(ch_fastq)
 
     if (params.bbsplit){
-        bbsplit(fastp.out.reads)
+        bbsplit(fastp.out.reads.combine(ch_ref1_file).combine(ch_ref2_file))
     }
     
     if (params.bwa){
-         bwa_competitive_mapping(fastp.out.reads)
+
+         bwa_competitive_mapping(fastp.out.reads.combine(ch_composite_bwaAuxFiles))
          qc_check(bwa_competitive_mapping.out.composite_ref_bam)
          summary_csv = qc_check.out.depth_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir:  params.outdir)
     }
