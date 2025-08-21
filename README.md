@@ -96,7 +96,35 @@ graph TD
 
 ## Outputs
 
+
+### sorted fastq directories
+
+
+**bwa_ref1_fastq**  
+
+This directory contains fastq files with reads from your original input that map only to to ref1 from the composite reference. 
+
+**bwa_ref2_fastq**
+
+This directory contains fastq files with reads from your original input that map only to to ref2 from the composite reference. 
+
+
+NOTE: This will be the default output or when run with `--bwa`. The bbsplit fastq directories will only be output if run with `--bsplit`. The bwa fastq directories will **not** be output when run with `--bbsplit`.
+
+
+**bbsplit_ref1_fastq**  
+
+This directory contains fastq files with reads from your original input that map only to to ref1 using bbsplit
+
+**bbsplit_ref2_fastq**
+
+This directory contains fastq files with reads from your original input that map only to to ref2 using bbsplit.
+
+
+
+## Additional QC outputs
 The following outputs are only available with default BWA-MEM method. These outputs are not available when using bbsplit.
+
 
 **qc_plots**
 
@@ -129,7 +157,11 @@ Each sample will have an individual depth summary in this folder. At the top lev
 
 # DETERMINATORSV
 
-This pipeline was designed for use with RSV. However, this pipeline is not pathogen specific. Run this pipeline with `--rsv` when using with RSV. This will not change the results and has no operational impacts but contains a special welcome message from determinatorSV. Hasta la vista RSV ambiguity. DeterminatorSV will be back... with subtypes!
+This pipeline was designed for use with RSV. However, this pipeline is not pathogen specific. Run this pipeline with `--rsv` when using with RSV. This will not change the results and has no operational impacts but contains a special welcome message from determinatorSV. 
+
+Hasta la vista RSV ambiguity. DeterminatorSV will be back... with subtypes!
+
+![Determinator](resources/README/determinator.png)
 
 
 
