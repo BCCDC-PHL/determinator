@@ -134,7 +134,7 @@ Each sample will contain a QC plot showing the depth of coverage across each ref
 
 **read_summary**
 
-Each sample will have an individual read summary in this output folder.
+Each sample will have an individual read summary in this output folder. At the top level of the output directory will be a combined_read_summary.csv with all samples combined.
 
 
 | sample_id | reference   | read_count | pct_total_reads |
