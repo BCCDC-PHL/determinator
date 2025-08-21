@@ -13,8 +13,8 @@ Run with **BWA-MEM competitive mapping** (default):
 nextflow run BCCDC-PHL/determinator \
   --fastq_input /path/to/fastq_dir
   --composite_ref path/to/composite_ref.fa \
-  --ref_1_ID <RSVA reference accession> \
-  --ref_2_ID <RSV B reference accession> \
+  --ref_1_ID <ref 1 accession> \
+  --ref_2_ID <ref 2 accession> \
   - profile <conda/apptainer>
   --cache path/to/cache/dir
 
@@ -59,8 +59,8 @@ nextflow run BCCDC-PHL/determinator \
   --bbsplit \
   --ref_1 path/to/ref_1.fa \
   --ref_2 path/to/ref_2.fa \
-  --ref_1_ID <RSVA reference accession> \
-  --ref_2_ID <RSV B reference accession> \
+  --ref_1_ID <ref 1 accession> \
+  --ref_2_ID <ref 2 accession> \
   --fastq_input /path/to/fastq_dir
 
 ```
