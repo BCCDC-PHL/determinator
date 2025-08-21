@@ -73,7 +73,7 @@ process bwa_competitive_mapping {
 
   output:
   path "*.gz"
-  path "*.csv"
+  path "*.csv", emit: read_summary_csv
   tuple val(sample_id), path('composite_ref.bam'), emit: composite_ref_bam
 
   script:
