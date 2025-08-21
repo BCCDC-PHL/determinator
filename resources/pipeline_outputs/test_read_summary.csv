@@ -1,0 +1,4 @@
+sample_id,reference,read_count,pct_total_reads
+test,PP109421.1,1274935,99.26
+test,OP975389.1,9505,0.74
+test,other,0,0.00
