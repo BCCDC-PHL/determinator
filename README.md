@@ -187,6 +187,7 @@ Each sample will have an individual depth summary in this folder. At the top lev
 # DETERMINATORSV
 
 This pipeline was originally designed for use with RSV. However, this pipeline is **not** pathogen specific. Run BCCDC-PHL/determinator with `--rsv` when working with RSV. This will not change the results but contains a special welcome message from determinatorSV. 
+
 ![Determinator](resources/README/determinator.png)
 
 
