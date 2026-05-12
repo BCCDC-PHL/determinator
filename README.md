@@ -22,7 +22,7 @@ nextflow run BCCDC-PHL/determinator \
   --composite_ref path/to/composite_ref.fa \
   --ref_1_ID <ref 1 accession> \
   --ref_2_ID <ref 2 accession> \
-  - profile <conda/apptainer>
+  -profile <conda/apptainer>
   --cache path/to/cache/dir
 
 ```
@@ -85,7 +85,9 @@ nextflow run BCCDC-PHL/determinator \
   --ref_2 path/to/ref_2.fa \
   --ref_1_ID <ref 1 accession> \
   --ref_2_ID <ref 2 accession> \
-  --fastq_input /path/to/fastq_dir
+  --fastq_input /path/to/fastq_dir \
+  -profile <conda/apptainer>
+  --cache path/to/cache/dir
 
 ```
 
