@@ -1,12 +1,7 @@
 ![Pipeline Diagram](resources/README/determinator_text.png)
-
-# DETERMINATORSV
-
-This pipeline was designed for use with RSV. However, this pipeline is **not** pathogen specific. Run BCCDC-PHL/determinator with `--rsv` when working with RSV. This will not change the results but contains a special welcome message from determinatorSV. 
-
-Hasta la vista RSV ambiguity. DeterminatorSV will be back... with subtypes!
-
-![Determinator](resources/README/determinator.png)
+<p align="center">
+<img src="resources/README/determinator.png" alt="Determinator" width="250">
+<p>
 
 # BCCDC-PHL/determinator
 A Nextflow pipeline for competitive read splitting using either **BWA-MEM** or **BBSplit**. This tool takes paired-end FASTQ files and separates reads into reference-specific FASTQs based on competitive mapping to two references. 
@@ -81,7 +76,7 @@ You will pass the indexed composite reference ***composite_ref_1_ref_2.fasta*** 
 
 ## Alternative splitting method with `--bbsplit`
 
-Note: This process uses bbsplit instead of competitive read mapping with bwa-mem
+Note: This process uses bbsplit instead of BWA-MEM
 
 ```
 nextflow run BCCDC-PHL/determinator \
@@ -94,7 +89,7 @@ nextflow run BCCDC-PHL/determinator \
 
 ```
 
-At this time both the path to the reference and the reference ID is required with bbsplit. 
+At this time, both the path to the reference and the reference ID is required with bbsplit. 
 
 
 ```mermaid
@@ -186,6 +181,16 @@ Each sample will have an individual depth summary in this folder. At the top lev
 |-----------|-------------|-----------------|------------------|-----------------|---------------|--------------|
 | test     | PP109421.1  | 15225           | 14746            | 96.85           | 10940.73      | 5035.0       |
 | test     | OP975389.1  | 15222           | 730              | 4.8             | 16.31         | 0.0          |
+
+
+
+# DETERMINATORSV
+
+This pipeline was originally designed for use with RSV. However, this pipeline is **not** pathogen specific. Run BCCDC-PHL/determinator with `--rsv` when working with RSV. This will not change the results but contains a special welcome message from determinatorSV. 
+![Determinator](resources/README/determinator.png)
+
+
+<sub>Hasta la vista RSV ambiguity. DeterminatorSV will be back... with subtypes!</sub>
 
 
 
