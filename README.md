@@ -48,11 +48,10 @@ graph TD
 ### Parameters
 
 | Option                           | Default  | Description                                                                                                         |
-|:---------------------------------|---------:|--------------------------------------------------------------------------------------------------------------------:|
-| `ref_1_ID`                        | `NO_FILE`     | name for reference 1 in output file naming    (used with --bwa)                                                                     |
-| `ref_2_ID`                  | `NO_FILE`     | name for reference 2 in output file     (used with --bwa)                                         |
+|:---------------------------------|---------:|--------------------------------------------------------------------------------------------------------------------:|                                  |
 | `composite_ref`            | `NO_FILE`   | path to bwa indexed composite reference (1 and 2)  (for use with bwa competitive mapping process only)                                                                   |
-| `fastq_input`               | `NO_FILE`   | path to directory of fastqs to competitively map and split reads that map to reference 1 and 2  into separate fastqs                                                                 |
+| `index`            | `false`   | Index `composite_ref` input. Add `--index` to run bwa index on composite reference input. Index files will be available in the output directory under "indexed_composite_reference"                                                              |
+| `fastq_input`               | `NO_FILE`   | path to directory of fastqs to competitively map and split reads that map to each reference into separate fastqs                                                                 |
 | `samplesheet_input`                    | `NO_FILE`     | samplesheet containing ID,R1,R2 with sample name and paths to fastq reads      |
 | `bwa`                    |  `true`   | default read splitting method using bwa and samtools                                          |
 | `min_mapq`                    |  `10`   | Don't output reads with a mapQ score below this value.                                          |
@@ -61,16 +60,15 @@ graph TD
 
 ### `--composite_ref` initial set up
 
-Prior to running determinator for the first time, you will need to generate an index for your composite reference.
+Prior to running determinator for the first time, you will need to generate your composite reference.
 
-To do this, you must concatenate your two references (ref_1 and ref_2) and then index with bwa.
+To do this, you must concatenate your references: 
 
 ```
 cat ref_1.fasta ref_2.fasta > composite_ref_1_ref_2.fasta
-bwa index composite_ref_1_ref_2.fasta
 ```
 
-You will pass the indexed composite reference ***composite_ref_1_ref_2.fasta*** to the `--composite_ref` parameter but you must also ensure the 5 files created by bwa index are present in the same directory (*.bwt|*.pac|*.ann|*.amb|*.sa) . These files will automatically be parsed as input by the pipeline to ensure apptainer compatibility.
+You will pass the indexed composite reference ***composite_ref_1_ref_2.fasta*** to the `--composite_ref` parameter. If you have not indexed the composite reference, also use the `--index` parameter. The bwa index files will be available in the output directory under "indexed_composite_reference"   If you want to save resources for subsequent pipeline runs, you can pass only the `--composite_ref` but you must also ensure the 5 files created by bwa index are present in the same directory (*.bwt|*.pac|*.ann|*.amb|*.sa) . These files will automatically be parsed as input by the pipeline to ensure apptainer compatibility.
 
 
 
@@ -194,6 +192,10 @@ This pipeline was originally designed for use with RSV. However, this pipeline i
 
 
 <sub>Hasta la vista RSV ambiguity. DeterminatorSV will be back... with subtypes!</sub>
+
+
+You can also try `--measles` and `--sarsCoV2` when working with measles and SARS-CoV-2.
+
 
 
 
