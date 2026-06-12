@@ -1,3 +1,22 @@
+process index_reference {
+
+    publishDir "${params.outdir}/indexed_composite_reference", mode: 'copy'
+
+    tag { composite_ref_fasta }
+
+    input:
+    path composite_ref_fasta
+
+    output:
+    tuple path(composite_ref_fasta), path("*")
+
+    script:
+    """
+    bwa index ${composite_ref_fasta}
+
+    """
+}
+
 process fastp {
 
     tag { sample_id }
@@ -63,33 +82,66 @@ process bwa_competitive_mapping {
 
   tag { sample_id }
  
-  publishDir  "${params.outdir}/bwa_${params.ref_1_ID}_fastq", mode: 'copy', pattern: "*${params.ref_1_ID}*_R*.gz"
-  publishDir  "${params.outdir}/bwa_${params.ref_2_ID}_fastq", mode: 'copy', pattern: "*${params.ref_2_ID}*_R*.gz"
+  publishDir "${params.outdir}", mode: 'copy', pattern: "**/*.gz"
   publishDir  "${params.outdir}/read_summary", mode: 'copy', pattern: "*_read_summary.csv"
+  publishDir  "${params.outdir}/individual_depth_read_summary", mode: 'copy', pattern: "*_depth_summary.csv"
+  publishDir  "${params.outdir}/individual_qc_plots", mode: 'copy', pattern: "*.png"
   
-  
+
   input:
-  tuple val(sample_id), path(reads_r1), path(reads_r2), path(composite_ref), path(composite_ref_files)
+  tuple val(sample_id), path(reads_r1), path(reads_r2), path(composite_ref), path(composite_ref_files), val(reference_names)
 
   output:
-  path "*.gz"
-  path "*.csv", emit: read_summary_csv
+  path "**/*.gz", emit: fastq
+  path "*_read_summary.csv", emit: read_summary_csv
+  path "*_depth_summary.csv", emit: depth_summary_csv
   tuple val(sample_id), path('composite_ref.bam'), emit: composite_ref_bam
+  tuple val(sample_id), path('*.png'), emit: individual_depth_plot
 
   script:
   """
 
   bwa mem -t ${task.cpus} -T ${params.bwa_T} ${composite_ref} ${reads_r1} ${reads_r2} > composite_ref.bam
-    filter_reads_according_to_ref.py -i composite_ref.bam -r1 ${params.ref_1_ID} -r2 ${params.ref_2_ID} -o1 ${sample_id}_${params.ref_1_ID}.bam -o2  ${sample_id}_${params.ref_2_ID}.bam --min-mapq ${params.min_mapq} --csv-output ${sample_id}_read_summary.csv --sample_id ${sample_id}
-    
-  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_1_ID}.bam | \
-      samtools fastq -1 ${sample_id}_${params.ref_1_ID}_R1.fastq.gz -2 ${sample_id}_${params.ref_1_ID}_R2.fastq.gz -s ${sample_id}_${params.ref_1_ID}_singletons.fastq.gz 
 
-  samtools sort -@ ${task.cpus} -n ${sample_id}_${params.ref_2_ID}.bam | \
-      samtools fastq -1 ${sample_id}_${params.ref_2_ID}_R1.fastq.gz -2 ${sample_id}_${params.ref_2_ID}_R2.fastq.gz -s ${sample_id}_${params.ref_2_ID}_singletons.fastq.gz 
+  filter_reads_according_to_ref.py \
+    -i composite_ref.bam \
+    --refs ${reference_names} \
+    --sample_id ${sample_id} \
+    --min-mapq ${params.min_mapq} \
+    --csv-output ${sample_id}_read_summary.csv
+
+  shopt -s nullglob
+  for bam in ${sample_id}_*.bam; do
+
+      ref=\${bam#${sample_id}_}
+      ref=\${ref%.bam}
+
+
+
+      mkdir -p bwa_fastq_\${ref}
+
+      samtools sort -@ ${task.cpus} -n \$bam | \
+          samtools fastq \
+          -1 bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_R1.fastq.gz \
+          -2 bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_R2.fastq.gz \
+          -s bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_singletons.fastq.gz
+
+      samtools sort -o \$bam.sorted.bam \$bam 
+
+      samtools index \$bam.sorted.bam
+
+
+
+  done
+
+
+  plot_summarize_depth_v0.1.py \
+  --sample ${sample_id} \
+  --bam ${sample_id}_*sorted.bam \
 
   """
 }
+
 
 process qc_check {
 
@@ -98,7 +150,7 @@ process qc_check {
   tag { sample_id }
  
   publishDir  "${params.outdir}/depth_summaries", mode: 'copy', pattern: "*.csv"
-  publishDir  "${params.outdir}/qc_plots", mode: 'copy', pattern: "*.png"
+  publishDir  "${params.outdir}/composite_qc_plots", mode: 'copy', pattern: "*.png"
   
   input:
   tuple val(sample_id), path(composite_ref_bam)
@@ -110,7 +162,8 @@ process qc_check {
   script:
   """
 
-  samtools sort -o composite_ref_sorted.bam ${composite_ref_bam} 
+  samtools view -b -F 0x900 ${composite_ref_bam} -q ${params.min_mapq} > composite_ref_clean.bam
+  samtools sort -o composite_ref_sorted.bam composite_ref_clean.bam
   samtools index composite_ref_sorted.bam
 
   plot_summarize_depth.py \

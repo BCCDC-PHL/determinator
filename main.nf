@@ -65,6 +65,68 @@ output directory: ${params.outdir}
 """
 }
 
+def measles_header() {
+    return """
+                                                                              
+██████╗░███████╗████████╗███████╗██████╗░███╗░░░███╗██╗███╗░░██╗░█████╗░████████╗░█████╗░██████╗░
+██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗████╗░████║██║████╗░██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗
+██║░░██║█████╗░░░░░██║░░░█████╗░░██████╔╝██╔████╔██║██║██╔██╗██║███████║░░░██║░░░██║░░██║██████╔╝
+██║░░██║██╔══╝░░░░░██║░░░██╔══╝░░██╔══██╗██║╚██╔╝██║██║██║╚████║██╔══██║░░░██║░░░██║░░██║██╔══██╗░
+██████╔╝███████╗░░░██║░░░███████╗██║░░██║██║░╚═╝░██║██║██║░╚███║██║░░██║░░░██║░░░╚█████╔╝██║░░██║
+╚═════╝░╚══════╝░░░╚═╝░░░╚══════╝╚═╝░░╚═╝╚═╝░░░░░╚═╝╚═╝╚═╝░░╚══╝╚═╝░░╚═╝░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝
+                       ______
+                     <((((((\\\\\\\\
+                     /      . }\\\\
+                     ;--..--._|}
+  (\\\\               '--/\\\\--'  )
+   \\\\                | '-'  :'|
+    \\\\               . -==- .-|      Hasta la vista, measles ambiguity. I'll be back ... with genotypes!
+     \\\\               \\\\.__.'   \\\\--._
+     [\\\\          __.--|       //  _/'--.
+     \\ \\\\       .'-._ ('-----'/ __/      \\\\
+      \\ \\\\     /   __>|      | '--.       |
+       \\ \\\\   |   \\\\   |     /    /       /
+        \\ '\\ /     \\\\  |     |  _/       /
+         \\\\  \\\\       \\ |     | /        /
+          \\\\  \\\\      \\\\        /
+
+===================================================================================================================
+output directory: ${params.outdir}
+
+"""
+}
+
+def sarsCoV2_header() {
+    return """
+                                                                              
+██████╗░███████╗████████╗███████╗██████╗░███╗░░░███╗██╗███╗░░██╗░█████╗░████████╗░█████╗░██████╗░
+██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗████╗░████║██║████╗░██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗
+██║░░██║█████╗░░░░░██║░░░█████╗░░██████╔╝██╔████╔██║██║██╔██╗██║███████║░░░██║░░░██║░░██║██████╔╝
+██║░░██║██╔══╝░░░░░██║░░░██╔══╝░░██╔══██╗██║╚██╔╝██║██║██║╚████║██╔══██║░░░██║░░░██║░░██║██╔══██╗░
+██████╔╝███████╗░░░██║░░░███████╗██║░░██║██║░╚═╝░██║██║██║░╚███║██║░░██║░░░██║░░░╚█████╔╝██║░░██║
+╚═════╝░╚══════╝░░░╚═╝░░░╚══════╝╚═╝░░╚═╝╚═╝░░░░░╚═╝╚═╝╚═╝░░╚══╝╚═╝░░╚═╝░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝
+                       ______
+                     <((((((\\\\\\\\
+                     /      . }\\\\
+                     ;--..--._|}
+  (\\\\               '--/\\\\--'  )
+   \\\\                | '-'  :'|
+    \\\\               . -==- .-|      Hasta la vista, SARS-CoV-2 ambiguity. I'll be back ... with Cicada squashed!
+     \\\\               \\\\.__.'   \\\\--._
+     [\\\\          __.--|       //  _/'--.
+     \\ \\\\       .'-._ ('-----'/ __/      \\\\
+      \\ \\\\     /   __>|      | '--.       |
+       \\ \\\\   |   \\\\   |     /    /       /
+        \\ '\\ /     \\\\  |     |  _/       /
+         \\\\  \\\\       \\ |     | /        /
+          \\\\  \\\\      \\\\        /
+
+===================================================================================================================
+output directory: ${params.outdir}
+
+"""
+}
+
 // include modules
 // include {printHelp} from './modules/help.nf'
 
@@ -80,31 +142,56 @@ if (params.profile){
     System.exit(1)
 }
 
-
-if (params.rsv){
+if (params.rsv) {
     log.info rsv_header()
-} else{
-    log.info header()
 
+} else if (params.measles) {
+    log.info measles_header()
+
+} else if (params.sarsCoV2) {
+    log.info sarsCoV2_header()
+
+} else {
+    log.info header()
 }
+
+
 
 
 include { bbsplit }                          from './modules/determinate.nf'
 include { bwa_competitive_mapping }          from './modules/determinate.nf'
 include { qc_check }                         from './modules/determinate.nf'
 include { fastp }                            from './modules/determinate.nf'
+include { index_reference }                  from './modules/determinate.nf'
 
 // main workflow
 
 workflow {
 
   //prepare bwa index files as channels
-
   ch_composite_ref_file = Channel.fromPath(params.composite_ref)
-  composite_bwaAuxFiles = []
-  composite_refPath = new File(params.composite_ref).getAbsolutePath()
-  new File(composite_refPath).getParentFile().eachFileMatch( ~/.*.bwt|.*.pac|.*.ann|.*.amb|.*.sa/) { composite_bwaAuxFiles << it }
-  ch_composite_bwaAuxFiles = Channel.fromPath( composite_bwaAuxFiles ).collect().toList()
+
+  if (params.index) {
+      ch_composite_bwaAuxFiles = index_reference(ch_composite_ref_file).map { it[1] }.collect().toList()
+  } else {
+    composite_bwaAuxFiles = []
+    composite_refPath = new File(params.composite_ref).getAbsolutePath()
+    new File(composite_refPath).getParentFile().eachFileMatch( ~/.*.bwt|.*.pac|.*.ann|.*.amb|.*.sa/) { composite_bwaAuxFiles << it }
+    ch_composite_bwaAuxFiles = Channel.fromPath( composite_bwaAuxFiles ).collect().toList()
+  }
+
+  //prepare list of references used in composite reference
+  ch_ref_names = Channel.fromPath(params.composite_ref).map { fasta ->
+            def names = []
+            fasta.withReader { r ->
+                r.eachLine { line ->
+                    if (line.startsWith('>')) {
+                        names << line.substring(1).tokenize(' ')[0]
+                    }
+                }
+            }
+            names.join(' ')
+        }
 
   // prepare bbsplit ref files as channels 
   ch_ref1_file = Channel.fromPath(params.ref_1)
@@ -126,9 +213,9 @@ workflow {
     
     if (params.bwa){
 
-         bwa_competitive_mapping(fastp.out.reads.combine(ch_composite_ref_file).combine(ch_composite_bwaAuxFiles))
+         bwa_competitive_mapping(fastp.out.reads.combine(ch_composite_ref_file).combine(ch_composite_bwaAuxFiles).combine(ch_ref_names))
          qc_check(bwa_competitive_mapping.out.composite_ref_bam)
-         depth_summary_csv = qc_check.out.depth_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir:  params.outdir)
+         depth_summary_csv = bwa_competitive_mapping.out.depth_summary_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir:  params.outdir)
          reads_summary_csv = bwa_competitive_mapping.out.read_summary_csv.collectFile(name: 'combined_read_summary.csv', keepHeader: true, storeDir:  params.outdir)
     }
 
