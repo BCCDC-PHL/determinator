@@ -47,15 +47,16 @@ graph TD
 
 ### Parameters
 
-| Option                           | Default  | Description                                                                                                         |
-|:---------------------------------|---------:|--------------------------------------------------------------------------------------------------------------------:|                                  |
-| `composite_ref`            | `NO_FILE`   | path to bwa indexed composite reference (1 and 2)  (for use with bwa competitive mapping process only)                                                                   |
-| `index`            | `false`   | Index `composite_ref` input. Add `--index` to run bwa index on composite reference input. Index files will be available in the output directory under "indexed_composite_reference"                                                              |
-| `fastq_input`               | `NO_FILE`   | path to directory of fastqs to competitively map and split reads that map to each reference into separate fastqs                                                                 |
-| `samplesheet_input`                    | `NO_FILE`     | samplesheet containing ID,R1,R2 with sample name and paths to fastq reads      |
-| `bwa`                    |  `true`   | default read splitting method using bwa and samtools                                          |
-| `min_mapq`                    |  `10`   | Don't output reads with a mapQ score below this value.                                          |
-| `bwa_T`                    |  `30`   | Don’t output alignment with score lower than INT. This option only affects output.  30 is the default value given by bwa.                              |
+
+| Option              | Default    | Description |
+|:-------------------|-----------:|------------|
+| `composite_ref`     | `NO_FILE`  | Path to BWA-indexed composite reference (a multi fasta of your references) for use with BWA competitive mapping workflow only. Any number of references can be used but it is recommended to perform your own validation the appropriate number for your application. |
+| `index`             | `false`    | Index `composite_ref` input. Add `--index` to run `bwa index` on the composite reference. Index files will be written to the output directory under `indexed_composite_reference`. |
+| `fastq_input`       | `NO_FILE`  | Path to a directory of FASTQ files for competitive mapping and splitting reads into reference-specific FASTQs. |
+| `samplesheet_input` | `NO_FILE`  | Samplesheet containing `ID,R1,R2` columns with sample names and FASTQ file paths. |
+| `bwa`               | `true`     | Enable BWA + SAMtools-based read splitting method (default workflow). |
+| `min_mapq`          | `10`       | Minimum mapping quality threshold. Reads with MAPQ below this value will not be output. |
+| `bwa_T`             | `30`       | Minimum alignment score threshold for output. This affects reporting only; default follows BWA default behavior. |
 
 
 ### `--composite_ref` initial set up
