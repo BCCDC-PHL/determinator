@@ -84,6 +84,8 @@ process bwa_competitive_mapping {
  
   publishDir "${params.outdir}", mode: 'copy', pattern: "**/*.gz"
   publishDir  "${params.outdir}/read_summary", mode: 'copy', pattern: "*_read_summary.csv"
+  publishDir  "${params.outdir}/individual_depth_read_summary", mode: 'copy', pattern: "*_depth_summary.csv"
+  publishDir  "${params.outdir}/individual_qc_plots", mode: 'copy', pattern: "*.png"
   
 
   input:
@@ -91,8 +93,10 @@ process bwa_competitive_mapping {
 
   output:
   path "**/*.gz", emit: fastq
-  path "*.csv", emit: read_summary_csv
+  path "*_read_summary.csv", emit: read_summary_csv
+  path "*_depth_summary.csv", emit: depth_summary_csv
   tuple val(sample_id), path('composite_ref.bam'), emit: composite_ref_bam
+  tuple val(sample_id), path('*.png'), emit: individual_depth_plot
 
   script:
   """
@@ -106,13 +110,13 @@ process bwa_competitive_mapping {
     --min-mapq ${params.min_mapq} \
     --csv-output ${sample_id}_read_summary.csv
 
-
-
   shopt -s nullglob
   for bam in ${sample_id}_*.bam; do
 
       ref=\${bam#${sample_id}_}
       ref=\${ref%.bam}
+
+
 
       mkdir -p bwa_fastq_\${ref}
 
@@ -122,7 +126,18 @@ process bwa_competitive_mapping {
           -2 bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_R2.fastq.gz \
           -s bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_singletons.fastq.gz
 
+      samtools sort -o \$bam.sorted.bam \$bam 
+
+      samtools index \$bam.sorted.bam
+
+
+
   done
+
+
+  plot_summarize_depth_v0.1.py \
+  --sample ${sample_id} \
+  --bam ${sample_id}_*sorted.bam \
 
   """
 }
@@ -135,7 +150,7 @@ process qc_check {
   tag { sample_id }
  
   publishDir  "${params.outdir}/depth_summaries", mode: 'copy', pattern: "*.csv"
-  publishDir  "${params.outdir}/qc_plots", mode: 'copy', pattern: "*.png"
+  publishDir  "${params.outdir}/composite_qc_plots", mode: 'copy', pattern: "*.png"
   
   input:
   tuple val(sample_id), path(composite_ref_bam)
