@@ -135,7 +135,7 @@ process bwa_competitive_mapping {
   done
 
 
-  plot_summarize_depth_v0.1.py \
+  plot_summarize_depth_individual_bams.py \
   --sample ${sample_id} \
   --bam ${sample_id}_*sorted.bam \
 
