@@ -160,9 +160,11 @@ if (params.rsv) {
 
 include { bbsplit }                          from './modules/determinate.nf'
 include { bwa_competitive_mapping }          from './modules/determinate.nf'
-include { qc_check }                         from './modules/determinate.nf'
 include { fastp }                            from './modules/determinate.nf'
 include { index_reference }                  from './modules/determinate.nf'
+include { plot_depth }                         from './modules/determinate.nf'
+include { sort_fastq }                         from './modules/determinate.nf'
+include { split_fastq }                         from './modules/determinate.nf'
 
 // main workflow
 
@@ -213,14 +215,28 @@ workflow {
     
     if (params.bwa){
 
-         bwa_competitive_mapping(fastp.out.reads.combine(ch_composite_ref_file).combine(ch_composite_bwaAuxFiles).combine(ch_ref_names))
-         qc_check(bwa_competitive_mapping.out.composite_ref_bam)
-         depth_summary_csv = bwa_competitive_mapping.out.depth_summary_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir:  params.outdir)
-         reads_summary_csv = bwa_competitive_mapping.out.read_summary_csv.collectFile(name: 'combined_read_summary.csv', keepHeader: true, storeDir:  params.outdir)
-    }
+        bwa_competitive_mapping(fastp.out.reads.combine(ch_composite_ref_file).combine(ch_composite_bwaAuxFiles).combine(ch_ref_names))
+         
+        plot_depth(bwa_competitive_mapping.out.split_bams)
 
-    
-   
+        if (params.fastq_mode == "split") {
+            split_fastq(bwa_competitive_mapping.out.split_bams)
+
+        }
+        if (params.fastq_mode == "sort") {
+            sort_fastq(fastp.out.reads.join(bwa_competitive_mapping.out.top_ref))
+        }
+
+        
+        depth_summary_csv = plot_depth.out.depth_summary_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir: params.outdir)
+
+        reads_summary_csv = bwa_competitive_mapping.out.read_summary_csv.collectFile(name: 'combined_read_summary.csv', keepHeader: true, storeDir: params.outdir)
+                    
+        reference_summary_csv = bwa_competitive_mapping.out.reference_summary_csv.collectFile(name: 'combined_reference_summary.csv', keepHeader: true, storeDir: params.outdir)
+
+
+
+     }
 
 }
 

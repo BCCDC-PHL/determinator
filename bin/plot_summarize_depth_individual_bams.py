@@ -64,7 +64,7 @@ def plot_depth_per_contig(depth_df, sample_name, min_depth, bam_list,
             color=colors[i % len(colors)]
         )
 
-        ax.set_title(bam_name.split('/')[-1].replace('.bam.sorted.bam', '').replace(f"{sample_name}_", "") )
+        ax.set_title(bam_name.split('/')[-1].replace('.sorted.bam', '').replace(f"{sample_name}_", "") )
         ax.set_yscale("log")
         ax.set_ylim(bottom=1, top=ylim_top)
         ax.axhline(y=min_depth, color='blue', linestyle='dotted', linewidth=0.7)
@@ -126,7 +126,7 @@ def compute_depth_summary(depth_df, min_depth, sample, bam_list, bam_reference_l
 
     for bam in bam_list:
 
-        ref = bam.split('/')[-1].replace('.bam.sorted.bam', '').replace(f"{sample}_", "")
+        ref = bam.split('/')[-1].replace('.sorted.bam', '').replace(f"{sample}_", "")
 
         df_bam = depth_df[depth_df['bam_name'] == bam]
 
