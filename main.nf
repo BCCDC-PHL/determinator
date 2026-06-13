@@ -226,15 +226,12 @@ workflow {
         if (params.fastq_mode == "sort") {
             sort_fastq(fastp.out.reads.join(bwa_competitive_mapping.out.top_ref))
         }
-
         
         depth_summary_csv = plot_depth.out.depth_summary_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir: params.outdir)
 
         reads_summary_csv = bwa_competitive_mapping.out.read_summary_csv.collectFile(name: 'combined_read_summary.csv', keepHeader: true, storeDir: params.outdir)
                     
         reference_summary_csv = bwa_competitive_mapping.out.reference_summary_csv.collectFile(name: 'combined_reference_summary.csv', keepHeader: true, storeDir: params.outdir)
-
-
 
      }
 
