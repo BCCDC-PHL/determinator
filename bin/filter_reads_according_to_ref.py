@@ -15,7 +15,6 @@ def process_reads(input_sam, outputs, counts, min_mapq):
     """
 
     unassigned = 0
-    valid_refs = set(counts.keys())  
 
     for read in input_sam:
 
@@ -27,11 +26,9 @@ def process_reads(input_sam, outputs, counts, min_mapq):
 
         ref = read.reference_name
 
-        if ref in valid_refs:
+        if ref in outputs:
             counts[ref] += 1
-
-            if ref in outputs:
-                outputs[ref].write(read)
+            outputs[ref].write(read)
 
         else:
             unassigned += 1
