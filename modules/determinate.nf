@@ -21,7 +21,7 @@ process fastp {
 
     tag { sample_id }
 
-    publishDir "${params.outdir}/${sample_id}", pattern: "${sample_id}_fastp.{json,csv}", mode: 'copy'
+    publishDir "${params.outdir}/fastp/${sample_id}", pattern: "${sample_id}_fastp.{json,csv}", mode: 'copy'
 
     input:
     tuple val(sample_id), path(reads_1), path(reads_2)
@@ -82,21 +82,20 @@ process bwa_competitive_mapping {
 
   tag { sample_id }
  
-  publishDir "${params.outdir}", mode: 'copy', pattern: "**/*.gz"
   publishDir  "${params.outdir}/read_summary", mode: 'copy', pattern: "*_read_summary.csv"
-  publishDir  "${params.outdir}/individual_depth_read_summary", mode: 'copy', pattern: "*_depth_summary.csv"
-  publishDir  "${params.outdir}/individual_qc_plots", mode: 'copy', pattern: "*.png"
-  
+  publishDir  "${params.outdir}/reference_summary", mode: 'copy', pattern: "*_reference_summary*"
 
   input:
   tuple val(sample_id), path(reads_r1), path(reads_r2), path(composite_ref), path(composite_ref_files), val(reference_names)
 
   output:
-  path "**/*.gz", emit: fastq
-  path "*_read_summary.csv", emit: read_summary_csv
-  path "*_depth_summary.csv", emit: depth_summary_csv
+  path("*_read_summary.csv"), emit: read_summary_csv
+  path("*_reference_summary.json"), emit: reference_summary_json
+  path("*_reference_summary.csv"), emit: reference_summary_csv
   tuple val(sample_id), path('composite_ref.bam'), emit: composite_ref_bam
-  tuple val(sample_id), path('*.png'), emit: individual_depth_plot
+  tuple val(sample_id), path("${sample_id}*.bam"), emit: split_bams
+  tuple val(sample_id), env(TOP_REF), emit: top_ref
+
 
   script:
   """
@@ -110,65 +109,106 @@ process bwa_competitive_mapping {
     --min-mapq ${params.min_mapq} \
     --csv-output ${sample_id}_read_summary.csv
 
-  shopt -s nullglob
-  for bam in ${sample_id}_*.bam; do
-
-      ref=\${bam#${sample_id}_}
-      ref=\${ref%.bam}
-
-
-
-      mkdir -p bwa_fastq_\${ref}
-
-      samtools sort -@ ${task.cpus} -n \$bam | \
-          samtools fastq \
-          -1 bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_R1.fastq.gz \
-          -2 bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_R2.fastq.gz \
-          -s bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_singletons.fastq.gz
-
-      samtools sort -o \$bam.sorted.bam \$bam 
-
-      samtools index \$bam.sorted.bam
-
-
-
-  done
-
-
-  plot_summarize_depth_individual_bams.py \
-  --sample ${sample_id} \
-  --bam ${sample_id}_*sorted.bam \
+    export TOP_REF=\$(cut -d',' -f2 ${sample_id}_reference_summary.csv | tail -n 1)
 
   """
+
+}
+
+process plot_depth {
+
+    tag { sample_id }
+
+    publishDir  "${params.outdir}/individual_depth_summary", mode: 'copy', pattern: "*depth_summary.csv"
+    publishDir  "${params.outdir}/individual_qc_plots", mode: 'copy', pattern: "*.png"
+    publishDir  "${params.outdir}/bams", mode: 'copy', pattern: "*.bam"
+
+    input:
+    tuple val(sample_id), path(bams)
+
+    output:
+    tuple val(sample_id), path("*.png"), emit: plots
+    path("*depth_summary.csv"), emit: depth_summary_csv
+    tuple val(sample_id), path("*.bam"), emit: split_sorted_bams
+
+
+    script:
+    """
+    for bam in ${bams}; do
+        sorted_bam=\${bam%.bam}.sorted.bam
+
+        samtools sort \
+            -@ ${task.cpus} \
+            -o \$sorted_bam \
+            \$bam
+
+        samtools index \$sorted_bam
+    done
+
+    shopt -s nullglob
+
+    plot_summarize_depth_individual_bams.py \
+        --sample ${sample_id} \
+        --bam *.sorted.bam
+    """
 }
 
 
-process qc_check {
+process split_fastq {
 
-  errorStrategy = 'ignore'
+    tag { sample_id }
 
-  tag { sample_id }
- 
-  publishDir  "${params.outdir}/depth_summaries", mode: 'copy', pattern: "*.csv"
-  publishDir  "${params.outdir}/composite_qc_plots", mode: 'copy', pattern: "*.png"
-  
-  input:
-  tuple val(sample_id), path(composite_ref_bam)
+    publishDir "${params.outdir}", mode: 'copy'
 
-  output:
-  tuple val(sample_id), path('*.png'), emit: depth_plot
-  path('*.csv'), emit: depth_csv
+    input:
+    tuple val(sample_id), path(bams)
 
-  script:
-  """
+    output:
+    path("split_fastq/**")
 
-  samtools view -b -F 0x900 ${composite_ref_bam} -q ${params.min_mapq} > composite_ref_clean.bam
-  samtools sort -o composite_ref_sorted.bam composite_ref_clean.bam
-  samtools index composite_ref_sorted.bam
+    script:
+    """
+    mkdir -p split_fastq/bwa_fastq_singletons
+    
+    for bam in ${bams}; do
 
-  plot_summarize_depth.py \
-  --sample ${sample_id} \
-  --bam composite_ref_sorted.bam \
+        ref=\$(basename \$bam .bam)
+        ref=\${ref#${sample_id}_}
 
-  """
+        mkdir -p split_fastq/bwa_fastq_\${ref}
+
+        samtools sort -@ ${task.cpus} -n \$bam | \
+        samtools fastq \
+          -1 split_fastq/bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_R1.fastq.gz \
+          -2 split_fastq/bwa_fastq_\${ref}/${sample_id}_\${ref}_minmapQ${params.min_mapq}_R2.fastq.gz \
+          -s split_fastq/bwa_fastq_singletons/${sample_id}_\${ref}_minmapQ${params.min_mapq}_singletons.fastq.gz
+
+    done
+    """
 }
+
+
+process sort_fastq {
+
+    tag { sample_id }
+
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    tuple val(sample_id), path(reads_r1), path(reads_r2), val(top_ref)
+
+    output:
+    path("sorted_fastq/**")
+
+    script:
+    """
+    mkdir -p sorted_fastq/${top_ref}
+
+    cp ${reads_r1} \
+        sorted_fastq/${top_ref}/${reads_r1}
+
+    cp ${reads_r2} \
+        sorted_fastq/${top_ref}/${reads_r2}
+    """
+}
+
