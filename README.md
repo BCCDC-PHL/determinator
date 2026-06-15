@@ -64,6 +64,8 @@ mode -->|sort| sort_fastq["sort_fastq⁴"]
 
 %% Split mode outputs
 
+split_bams --> split_fastq
+
 %% Sort mode outputs
 trimmed --> sort_fastq
 ref_summary --> sort_fastq
