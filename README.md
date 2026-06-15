@@ -4,7 +4,7 @@
 <p>
 
 # BCCDC-PHL/determinator
-A Nextflow pipeline for competitive read splitting using either **BWA-MEM** or **BBSplit**. This tool takes paired-end FASTQ files and separates reads into reference-specific FASTQs based on competitive mapping to multiple references. 
+A Nextflow pipeline for determining the best matching reference using either **BWA-MEM** or **BBSplit**. This tool takes paired-end FASTQ files and, based on user input, ***sorts*** full FASTQs **or** ***splits*** reads into reference-specific FASTQs based on competitive mapping to multiple references. 
 
 This pipeline is based on the [readMapping](
 https://github.com/jts/ncov2019-artic-nf/blob/6ecf07bef462bfb896ae91629c49116761c03175/modules/illumina.nf#L79-L104)  process in the ARTIC network's Illumina Freebayes consensus generation workflow (originally written by Jared Simpson (@jts))
@@ -20,8 +20,8 @@ Run with **BWA-MEM competitive mapping** (default):
 nextflow run BCCDC-PHL/determinator \
   --fastq_input /path/to/fastq_dir
   --composite_ref path/to/composite_ref.fa \
-  --ref_1_ID <ref 1 accession> \
-  --ref_2_ID <ref 2 accession> \
+  --index \
+  --fastq_mode <sort/split>
   -profile <conda/apptainer> \
   --cache path/to/cache/dir
 
@@ -50,10 +50,11 @@ graph TD
 
 | Option              | Default    | Description |
 |:-------------------|-----------:|------------|
-| `composite_ref`     | `NO_FILE`  | Path to BWA-indexed composite reference (a multi fasta of your references) for use with BWA competitive mapping workflow only. Any number of references can be used but it is recommended to perform your own validation the appropriate number for your application. |
-| `index`             | `false`    | Index `composite_ref` input. Add `--index` to run `bwa index` on the composite reference. Index files will be written to the output directory under `indexed_composite_reference`. |
-| `fastq_input`       | `NO_FILE`  | Path to a directory of FASTQ files for competitive mapping and splitting reads into reference-specific FASTQs. |
+| `composite_ref`     | `NO_FILE`  | Path to your composite reference (a multi fasta of your references) for use with BWA competitive mapping workflow only. Any number of references can be used but it is recommended to perform your own validation of the appropriate number for your application. |
+| `index`             | `false`    | Index `composite_ref` input. Add `--index` to run `bwa index` on the composite reference. Index files will be written to the output directory under `indexed_composite_reference`. Once these files are created, you can run determinator without the `index` parameter to save resources. **Note:** BWA index files must be present in the directory of your composite reference to run determinator without the `index` parameter.|
+| `fastq_input`       | `NO_FILE`  | Path to a directory of FASTQ files to split or sort into reference-specific FASTQs. |
 | `samplesheet_input` | `NO_FILE`  | Samplesheet containing `ID,R1,R2` columns with sample names and FASTQ file paths. |
+| `fastq_mode`     | `sort`  | Options: `sort` and `split`. The `sort` fastq mode will sort your fastq files into directories based on the best matching reference in your composite reference. In this mode, all reads are retained. The `split` mode will split the reads from your input fastq into separate fastqs containing only the reads that map best to each reference in your composite reference. `split` mode is designed for handling suspected mixtures. Therefore, for each input fastq, determinator outputs a separate fastq file for each reference in your composite reference. If no reads map to a reference, the output fastq for that reference will be empty.|
 | `bwa`               | `true`     | Enable BWA + SAMtools-based read splitting method (default workflow). |
 | `min_mapq`          | `10`       | Minimum mapping quality threshold. Reads with MAPQ below this value will not be output. |
 | `bwa_T`             | `30`       | Minimum alignment score threshold for output. This affects reporting only; default follows BWA default behavior. |
@@ -69,7 +70,7 @@ To do this, you must concatenate your references:
 cat ref_1.fasta ref_2.fasta > composite_ref_1_ref_2.fasta
 ```
 
-You will pass the indexed composite reference ***composite_ref_1_ref_2.fasta*** to the `--composite_ref` parameter. If you have not indexed the composite reference, also use the `--index` parameter. The bwa index files will be available in the output directory under "indexed_composite_reference"   If you want to save resources for subsequent pipeline runs, you can pass only the `--composite_ref` but you must also ensure the 5 files created by bwa index are present in the same directory (*.bwt|*.pac|*.ann|*.amb|*.sa) . These files will automatically be parsed as input by the pipeline to ensure apptainer compatibility.
+You will pass the indexed composite reference ***composite_ref_1_ref_2.fasta*** to the `--composite_ref` parameter. If you have not indexed the composite reference, use the `--index` parameter. The bwa index files will be available in the output directory under "indexed_composite_reference"   If you want to save resources for subsequent pipeline runs, you can pass only the `--composite_ref` but you must also ensure the 5 files created by bwa index are present in the same directory (*.bwt|*.pac|*.ann|*.amb|*.sa) . These files will automatically be parsed as input by the pipeline to ensure apptainer compatibility.
 
 
 
