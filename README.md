@@ -31,19 +31,86 @@ nextflow run BCCDC-PHL/determinator \
 ```mermaid
 
 graph TD
+
+
+%% Inputs
+fastq[Input FASTQ]
+composite_ref[Composite reference FASTA]
+
+%% Main processing
+fastq --> fastp[fastp]
+fastp --> trimmed["trimmed_R1.fastq.gz<br/>trimmed_R2.fastq.gz"]
+
+trimmed --> bwa[bwa_competitive_mapping]
+composite_ref --> bwa
+
+%% Mapping outputs
+
+bwa --> split_bams["sample_ref*.bam¹"]
+bwa --> read_summary["read_summary.csv"]
+bwa --> ref_summary["reference_summary.csv/json"]
+
+%% QC branch
+split_bams --> plot[plot_depth]
+
+plot --> depth_csv["depth_summary.csv"]
+plot --> depth_png["depth_per_contig.png"]
+
+%% FASTQ routing branch
+bwa --> mode{params.fastq_mode²}
+
+mode -->|split| split_fastq["split_fastq³"]
+mode -->|sort| sort_fastq["sort_fastq⁴"]
+
+%% Split mode outputs
+
+%% Sort mode outputs
+trimmed --> sort_fastq
+ref_summary --> sort_fastq
+
+
+%% Combined summaries
+
   composite_ref[composite_ref.fa]
 
-  fastq[fastq_dir]
-  fastq --> bwa_competitive_mapping(bwa_competitive_mapping)
-  composite_ref --> bwa_competitive_mapping
-  bwa_competitive_mapping --> qc_check(qc_check)
-  bwa_competitive_mapping --> bwa_ref_1_fastq
-  bwa_competitive_mapping --> bwa_ref_2_fastq
-  qc_check --> qc_depth_plot
-  qc_check --> qc_depth_summary_csv
+
 
 ```
 
+**Legend**
+
+**¹ `sample_ref*.bam`**  
+BAMs generated per each reference in `composite_ref.fa`
+
+
+**² `params.fastq_mode`**
+
+User controlled `--fastq_mode`:
+- `split` → Splits aligned BAMs into per-reference FASTQ directories using samtools fastq.
+- `sort` → Sorts fastp trimmed input FASTQs into folders based on top reference assignment from reference_summary.json.ories
+
+
+**³ split_fastq**  
+Directory structure:
+```
+split_fastq/
+├── bwa_fastq_ref1/
+│   ├── sample_ref1_R1.fastq.gz
+│   └── sample_ref1_R2.fastq.gz
+└── bwa_fastq_ref2/
+
+```
+
+**⁴ sort_fastq**
+Directory structure:
+```
+sorted_fastq/
+├── ref1/
+│   ├── sample_trimmed_R1.fastq.gz
+│   └── sample_trimmed_R2.fastq.gz
+└── ref2/
+
+```
 
 ### Parameters
 
