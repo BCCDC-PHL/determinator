@@ -102,7 +102,9 @@ split_fastq/
 ```
 
 **⁴ sort_fastq**
+
 Directory structure:
+
 ```
 sorted_fastq/
 ├── ref1/
@@ -191,22 +193,7 @@ graph TD
 | `bbsplit_ambigious2`                    |    `toss`  | Set behavior only for reads that map ambiguously to multiple different references default=  toss     options:  best   (use the first best site) toss   (consider unmapped) all   (write a copy to the output for each reference to which it maps) split   (write a copy to the AMBIGUOUS_ output for each reference to which it maps) |
 
 
-## Outputs
-
-
-### sorted fastq directories
-
-
-**bwa_ref1_fastq**  
-
-This directory contains fastq files with reads from your original input that map only to ref1 from the composite reference. 
-
-**bwa_ref2_fastq**
-
-This directory contains fastq files with reads from your original input that map only to ref2 from the composite reference. 
-
-
-NOTE: This will be the default output or when run with `--bwa`. The bbsplit fastq directories will only be output if run with `--bsplit`. The bwa fastq directories will **not** be output when run with `--bbsplit`.
+**bbsplit Outputs**
 
 
 **bbsplit_ref1_fastq**  
@@ -220,7 +207,7 @@ This directory contains fastq files with reads from your original input that map
 
 
 ## Additional QC outputs
-The following outputs are only available with default **BWA-MEM** method. These outputs are **not** available when using bbsplit.
+The following outputs are only available with the default **BWA-MEM** method. These outputs are **not** available when using bbsplit.
 
 
 **qc_plots**
@@ -241,6 +228,60 @@ Each sample will have an individual read summary in this output folder. At the t
 | test      | other       | 0          | 0.00            |
 
 
+**reference_summary**
+
+Each sample produces an individual *_reference_summary.csv and *_reference_summary.json. A combined summary across all samples is also generated as combined_reference_summary.csv.
+
+This output describes competitive mapping results across the top three references.
+
+CSV Format
+| sample_id | top_reference | top_fraction | second_reference | second_fraction | top_vs_second_delta | third_reference | third_fraction | status   |
+| --------- | ------------- | ------------ | ---------------- | --------------- | ------------------- | --------------- | -------------- | -------- |
+| test      | PP109421.1    | 0.9926       | OP975389.1       | 0.0074          | 0.9852              | NA              | 0.0000         | assigned |
+
+
+JSON Format
+
+The JSON provides a structured representation suitable for downstream parsing:
+
+- ranked reference list with read counts and fractions for each reference in `composite_ref.fa`
+- top/second/third best reference assignments
+- delta between top two references
+- overall sample classification
+
+```
+{
+  "sample_id": "test",
+  "top_reference": {
+    "name": "PP109421.1",
+    "fraction": 0.9926
+  },
+  "second_reference": {
+    "name": "OP975389.1",
+    "fraction": 0.0074
+  },
+  "third_reference": {
+    "name": null,
+    "fraction": 0.0
+  },
+  "top_vs_second_delta": 0.9852,
+  "status": "assigned",
+  "total_reads": 1284440,
+  "references": [
+    {
+      "name": "PP109421.1",
+      "read_count": 1274935,
+      "fraction": 0.9926
+    },
+    {
+      "name": "OP975389.1",
+      "read_count": 9505,
+      "fraction": 0.0074
+    }
+  ]
+}
+
+```
 
 **depth_summaries**
 
