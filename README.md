@@ -18,7 +18,7 @@ Run with **BWA-MEM competitive mapping** (default):
 
 ```bash
 nextflow run BCCDC-PHL/determinator \
-  --fastq_input /path/to/fastq_dir
+  --fastq_input /path/to/fastq_dir \
   --composite_ref path/to/composite_ref.fa \
   --index \
   --fastq_mode <sort/split>
