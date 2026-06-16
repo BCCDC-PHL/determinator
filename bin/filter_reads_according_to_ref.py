@@ -45,12 +45,22 @@ def compute_reference_metrics(counts, unassigned):
 
     if total == 0:
         return {
+            "total": 0,
+            "references": [],
+
+            "top": None,
+            "second": None,
+            "third": None,
+
             "top_ref": "NA",
             "second_ref": "NA",
+            "third_ref": "NA",
+
             "top_frac": 0.0,
             "second_frac": 0.0,
-            "delta": 0.0,
-            "total": 0
+            "third_frac": 0.0,
+
+            "top_vs_second_delta": 0.0
         }
 
     sorted_refs = sorted(counts.items(), key=lambda x: x[1], reverse=True)
