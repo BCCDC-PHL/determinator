@@ -207,15 +207,22 @@ workflow {
 
   main:
 
-    fastp(ch_fastq)
+    def ch_reads
+
+    if (!params.skip_fastp) {
+        fastp(ch_fastq)
+        ch_reads = fastp.out.reads
+    } else {
+        ch_reads = ch_fastq
+    }
 
     if (params.bbsplit){
-        bbsplit(fastp.out.reads.combine(ch_ref1_file).combine(ch_ref2_file))
+        bbsplit(ch_reads.combine(ch_ref1_file).combine(ch_ref2_file))
     }
     
     if (params.bwa){
 
-        bwa_competitive_mapping(fastp.out.reads.combine(ch_composite_ref_file).combine(ch_composite_bwaAuxFiles).combine(ch_ref_names))
+        bwa_competitive_mapping(ch_reads.combine(ch_composite_ref_file).combine(ch_composite_bwaAuxFiles).combine(ch_ref_names))
          
         plot_depth(bwa_competitive_mapping.out.split_bams)
 
@@ -224,7 +231,7 @@ workflow {
 
         }
         if (params.fastq_mode == "sort") {
-            sort_fastq(fastp.out.reads.join(bwa_competitive_mapping.out.top_ref))
+            sort_fastq(ch_reads.join(bwa_competitive_mapping.out.top_ref))
         }
         
         depth_summary_csv = plot_depth.out.depth_summary_csv.collectFile(name: 'combined_depth_summary.csv', keepHeader: true, storeDir: params.outdir)
