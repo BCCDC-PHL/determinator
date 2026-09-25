@@ -162,9 +162,13 @@ include { bbsplit }                          from './modules/determinate.nf'
 include { bwa_competitive_mapping }          from './modules/determinate.nf'
 include { fastp }                            from './modules/determinate.nf'
 include { index_reference }                  from './modules/determinate.nf'
-include { plot_depth }                         from './modules/determinate.nf'
-include { sort_fastq }                         from './modules/determinate.nf'
-include { split_fastq }                         from './modules/determinate.nf'
+include { plot_depth }                       from './modules/determinate.nf'
+include { sort_fastq }                       from './modules/determinate.nf'
+include { split_fastq }                      from './modules/determinate.nf'
+
+include { pipeline_provenance }              from './modules/provenance.nf'
+include { collect_provenance }               from './modules/provenance.nf'
+include { hash_files }                       from './modules/hash_files.nf'
 
 // main workflow
 
@@ -241,6 +245,34 @@ workflow {
         reference_summary_csv = bwa_competitive_mapping.out.reference_summary_csv.collectFile(name: 'combined_reference_summary.csv', keepHeader: true, storeDir: params.outdir)
 
      }
+
+    // Provenance collection processes
+      // [sample_id, [provenance_file_1.yml, provenance_file_2.yml, provenance_file_3.yml...]]
+      // ...and then concatenate them all together in the 'collect_provenance' process.
+      ch_start_time = Channel.of(workflow.start)
+      ch_pipeline_name = Channel.of(workflow.manifest.name)
+      ch_pipeline_version = Channel.of(workflow.manifest.version)
+      ch_pipeline_provenance = pipeline_provenance(ch_pipeline_name.combine(ch_pipeline_version).combine(ch_start_time))
+      // FASTQ provenance
+      hash_files(ch_fastq.map{ it -> [it[0], [it[1], it[2]]] }.combine(Channel.of("fastq-input")))
+      // determinator.nf provenance
+
+    if (!params.skip_fastp) {
+        ch_provenance = fastp.out.provenance
+        ch_provenance = ch_provenance
+            .join(bwa_competitive_mapping.out.provenance)
+            .map { it -> [it[0], [it[1]] << it[2]] }
+
+    } else {
+        ch_provenance = bwa_competitive_mapping.out.provenance.map { it -> [it[0], [it[1]]] }
+
+    }
+    ch_provenance = ch_provenance.join(plot_depth.out.provenance).map { it -> [it[0], it[1] << it[2]] }
+    if (params.fastq_mode == "split") {
+        ch_provenance = ch_provenance.join(split_fastq.out.provenance).map { it -> [it[0], it[1] << it[2]] }
+    }
+
+      collect_provenance(ch_provenance)
 
 }
 
