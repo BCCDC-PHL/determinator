@@ -15,7 +15,7 @@ jobs:
         include:
           - nextflow_version: "24.10.6"
             java_version: "17"
-            profile: "apptainer"
+            profile: "conda"
     name: Nextflow v${{ matrix.nextflow_version }} / ${{ matrix.profile }}
     runs-on: ubuntu-latest
     steps:
@@ -29,6 +29,8 @@ jobs:
         java-version: ${{ matrix.java_version }}
     - name: Install Apptainer
       run: bash .github/scripts/install_apptainer.sh  
+    - name: Install Miniconda
+      run: bash .github/scripts/install_conda.sh
     - name: Install Nextflow
       env:
         NXF_VER: ${{ matrix.nextflow_version }}
