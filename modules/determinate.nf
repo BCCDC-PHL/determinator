@@ -34,14 +34,6 @@ process fastp {
 
     script:
     """
-    printf -- "- process_name: fastp\\n"  >> ${sample_id}_fastp_provenance.yml
-    printf -- "  tools:\\n"               >> ${sample_id}_fastp_provenance.yml
-    printf -- "    - tool_name: fastp\\n" >> ${sample_id}_fastp_provenance.yml
-    printf -- "      tool_version: \$(fastp --version 2>&1 | cut -d ' ' -f 2)\\n" >> ${sample_id}_fastp_provenance.yml
-    printf -- "      parameters:\\n"               >> ${sample_id}_fastp_provenance.yml
-    printf -- "        - parameter: --cut_tail\\n" >> ${sample_id}_fastp_provenance.yml
-    printf -- "          value: null\\n"           >> ${sample_id}_fastp_provenance.yml
-
     fastp \
 	--cut_tail --trim_poly_g \
 	-i ${reads_1} \
@@ -51,6 +43,15 @@ process fastp {
 
     mv fastp.json ${sample_id}_fastp.json
     fastp_json_to_csv.py -s ${sample_id} ${sample_id}_fastp.json > ${sample_id}_fastp.csv
+
+    printf -- "- process_name: fastp\\n"  >> ${sample_id}_fastp_provenance.yml
+    printf -- "  tools:\\n"               >> ${sample_id}_fastp_provenance.yml
+    printf -- "    - tool_name: fastp\\n" >> ${sample_id}_fastp_provenance.yml
+    printf -- "      tool_version: \$(fastp --version 2>&1 | cut -d ' ' -f 2)\\n" >> ${sample_id}_fastp_provenance.yml
+    printf -- "      parameters:\\n"               >> ${sample_id}_fastp_provenance.yml
+    printf -- "        - parameter: --cut_tail\\n" >> ${sample_id}_fastp_provenance.yml
+    printf -- "          value: null\\n"           >> ${sample_id}_fastp_provenance.yml
+
     """
 }
 
@@ -66,13 +67,22 @@ process bbsplit {
   tuple val(sample_id), path(reads_r1), path(reads_r2), path(ref_1), path(ref_2)
 
   output:
-  path "*.gz"
+  path "*.gz", emit: fastq
+  tuple val(sample_id), path("${sample_id}_bbsplit_provenance.yml"), emit: provenance
 
   script:
   """
 
   bbsplit.sh ambiguous2=${params.bbsplit_ambiguous2} ref=${ref_1},${ref_2} in=${reads_r1} in2=${reads_r2}  basename=${sample_id}_%_R#.fq
   gzip *.fq
+
+  printf -- "- process_name: bbsplit\n" >> ${sample_id}_bbsplit_provenance.yml
+  printf -- "  tools:\n" >> ${sample_id}_bbsplit_provenance.yml
+  printf -- "    - tool_name: bbsplit\n" >> ${sample_id}_bbsplit_provenance.yml
+  printf -- "      tool_version: \$(bbsplit.sh --version 2>&1 | grep 'BBTools version' | awk '{print \$3}')\n" >> ${sample_id}_bbsplit_provenance.yml
+  printf -- "      parameters:\n" >> ${sample_id}_bbsplit_provenance.yml
+  printf -- "        - parameter: ambiguous2\n" >> ${sample_id}_bbsplit_provenance.yml
+  printf -- "          value: ${params.bbsplit_ambiguous2}\n" >> ${sample_id}_bbsplit_provenance.yml
 
   """
 }
@@ -87,6 +97,7 @@ process bwa_competitive_mapping {
 
   input:
   tuple val(sample_id), path(reads_r1), path(reads_r2), path(composite_ref), path(composite_ref_files), val(reference_names)
+  
 
   output:
   path("*_read_summary.csv"), emit: read_summary_csv
@@ -95,6 +106,7 @@ process bwa_competitive_mapping {
   tuple val(sample_id), path('composite_ref.bam'), emit: composite_ref_bam
   tuple val(sample_id), path("${sample_id}*.bam"), emit: split_bams
   tuple val(sample_id), env(TOP_REF), emit: top_ref
+  tuple val(sample_id), path("${sample_id}_bwa_competitive_mapping_provenance.yml"), emit: provenance
 
 
   script:
@@ -110,6 +122,24 @@ process bwa_competitive_mapping {
     --csv-output ${sample_id}_read_summary.csv
 
     export TOP_REF=\$(cut -d',' -f2 ${sample_id}_reference_summary.csv | tail -n 1)
+
+    printf -- "- process_name: bwa_competitive_mapping\n"                                                       >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "  tools:\n"                                                                                      >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+
+    printf -- "    - tool_name: bwa\n"                                                                          >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "      tool_version: \$(bwa 2>&1 | grep 'Version:' | awk '{print \$2}')\n"                       >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "      subcommand: mem\n"                                                                         >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "      parameters:\n"                                                                             >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "        - parameter: -t\n"                                                                       >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "          value: ${task.cpus}\n"                                                                 >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "        - parameter: -T\n"                                                                       >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "          value: ${params.bwa_T}\n"                                                              >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+
+    printf -- "    - tool_name: filter_reads_according_to_ref.py\n"                                             >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "      parameters:\n"                                                                             >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "        - parameter: --min-mapq\n"                                                               >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+    printf -- "          value: ${params.min_mapq}\n"                                                           >> ${sample_id}_bwa_competitive_mapping_provenance.yml
+
 
   """
 
@@ -130,6 +160,7 @@ process plot_depth {
     tuple val(sample_id), path("*.png"), emit: plots
     path("*depth_summary.csv"), emit: depth_summary_csv
     tuple val(sample_id), path("*.bam"), emit: split_sorted_bams
+    tuple val(sample_id), path("${sample_id}_plot_depth_provenance.yml"), emit: provenance
 
 
     script:
@@ -150,6 +181,22 @@ process plot_depth {
     plot_summarize_depth_individual_bams.py \
         --sample ${sample_id} \
         --bam *.sorted.bam
+
+    printf -- "- process_name: plot_depth\n" >> ${sample_id}_plot_depth_provenance.yml
+    printf -- "  tools:\n" >> ${sample_id}_plot_depth_provenance.yml
+
+    printf -- "    - tool_name: samtools\n" >> ${sample_id}_plot_depth_provenance.yml
+    printf -- "      tool_version: \$(samtools 2>&1 | grep 'Version:' | cut -d ' ' -f 2)\n" >> ${sample_id}_plot_depth_provenance.yml
+    printf -- "      subcommand: sort\n" >> ${sample_id}_plot_depth_provenance.yml
+    printf -- "      parameters:\n" >> ${sample_id}_plot_depth_provenance.yml
+    printf -- "        - parameter: -@\n" >> ${sample_id}_plot_depth_provenance.yml
+    printf -- "          value: ${task.cpus}\n" >> ${sample_id}_plot_depth_provenance.yml
+
+    printf -- "    - tool_name: samtools\n" >> ${sample_id}_plot_depth_provenance.yml
+    printf -- "      tool_version: \$(samtools 2>&1 | grep 'Version:' | cut -d ' ' -f 2)\n" >> ${sample_id}_plot_depth_provenance.yml
+    printf -- "      subcommand: index\n" >> ${sample_id}_plot_depth_provenance.yml
+
+    printf -- "    - tool_name: plot_summarize_depth_individual_bams.py\n" >> ${sample_id}_plot_depth_provenance.yml
     """
 }
 
@@ -164,7 +211,8 @@ process split_fastq {
     tuple val(sample_id), path(bams)
 
     output:
-    path("split_fastq/**")
+    path("split_fastq/**"), emit: fastq
+    tuple val(sample_id), path("${sample_id}_split_fastq_provenance.yml"), emit: provenance
 
     script:
     """
@@ -184,6 +232,23 @@ process split_fastq {
           -s split_fastq/bwa_fastq_singletons/${sample_id}_\${ref}_minmapQ${params.min_mapq}_singletons.fastq.gz
 
     done
+
+    printf -- "- process_name: split_fastq\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "  tools:\n" >> ${sample_id}_split_fastq_provenance.yml
+
+    printf -- "    - tool_name: samtools\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "      tool_version: \$(samtools 2>&1 | grep 'Version:' | cut -d ' ' -f 2)\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "      subcommand: sort\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "      parameters:\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "        - parameter: -@\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "          value: ${task.cpus}\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "        - parameter: -n\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "          value: null\n" >> ${sample_id}_split_fastq_provenance.yml
+
+    printf -- "    - tool_name: samtools\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "      tool_version: \$(samtools 2>&1 | grep 'Version:' | cut -d ' ' -f 2)\n" >> ${sample_id}_split_fastq_provenance.yml
+    printf -- "      subcommand: fastq\n" >> ${sample_id}_split_fastq_provenance.yml
+
     """
 }
 
