@@ -1,12 +1,11 @@
 #!/bin/bash
+
 set -eo pipefail
 
-echo Install Nextflow .. >> artifacts/test_artifact.log
+artifacts_dir="artifacts"
+
+echo Install Nextflow .. >> ${artifacts_dir}/test.log
 
 wget -qO- https://get.nextflow.io | bash
 
-mkdir -p /opt/nextflow/bin
-
-mv nextflow /opt/nextflow/bin
-
-echo "export PATH=/opt/nextflow/bin:$PATH" >> ~/.bashrc
+sudo mv nextflow /usr/local/bin/
